@@ -1,0 +1,36 @@
+<<: !include your-esp-common-file.yaml
+
+# Configure the UART interface for RS-485 communication and initialise Modbus.
+# This setup uses an ESP8266 NodeMCU Devkit v0.9 and a MAX485 module.
+uart:
+  - id: uart_rs_485
+    tx_pin: 14
+    rx_pin: 12
+    baud_rate: 9600
+    parity: "EVEN"
+    stop_bits: 1
+
+modbus:
+  - id: kws_modbus
+    uart_id: uart_rs_485
+    flow_control_pin: 13
+
+# Include the KWS303L package to read data from two meters on the same RS-485 bus
+packages:
+  meter1: !include
+    file: kws303l.yaml
+    vars:
+      modbus_id: kws_modbus
+      slave_addr: 1       # Optional, default is 1 – corresponds to the number shown in the top-right corner of the meter display
+      update_every: 5s    # Optional, default is 10s – how often to poll the meter
+      kws_id: meter_1     # Optional, default is kws303l – must be unique if using multiple meters
+      kws_name: "Grid"    # Optional, default is "Meter" – friendly name used as a prefix for all related sensors
+
+  meter2: !include
+    file: kws303l.yaml
+    vars:
+      modbus_id: kws_modbus
+      slave_addr: 2
+      update_every: 5s
+      kws_id: meter_2
+      kws_name: "Load"

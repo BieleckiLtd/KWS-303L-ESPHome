@@ -1,0 +1,399 @@
+# This is a configuration file for the KWS-303L energy meter.
+
+# ⚠️ Known issues:
+# - No way to clear an alarm
+# - Over Power alarm is not being reported (shows code 0)
+# - Unknown codes for all possible alarm types
+# - Limit Energy setting is buggy
+# - Unknown register for display language
+
+substitutions:
+  slave_addr: "1"
+  update_every: "10s"
+  kws_id: kws303l
+  kws_name: "Meter"
+
+  # Sensors
+  kws_rated_voltage: "Rated Voltage"
+  kws_rated_current: "Rated Current"
+  kws_measured_voltage: "Measured Voltage"
+  kws_measured_current: "Measured Current"
+  kws_measured_power: "Measured Power"
+  kws_measured_pf: "Measured Power Factor"
+  kws_measured_freq: "Measured Frequency"
+  kws_measured_energy: "Measured Energy"
+  kws_measured_temp: "Measured Temperature"
+  kws_measured_timer: "Measured Timer Minutes"
+  kws_alarm_code: "Alarm Code"
+  kws_alarm: "Alarm"
+
+  # Numbers (Limits + Config)
+  kws_limit_ov: "Limit Over-Voltage"
+  kws_limit_uv: "Limit Under-Voltage"
+  kws_limit_oc: "Limit Over-Current"
+  kws_limit_op: "Limit Over-Power"
+  kws_limit_temp: "Limit Over-Temp"
+  kws_limit_energy: "Limit Energy"
+  kws_set_address: "Set Device Slave Address (⚠ Changing may disconnect)"
+  kws_set_backlight_timeout: "Set Backlight Timeout"
+  kws_set_backlight_brightness: "Set Backlight Brightness"
+
+  # Switches
+  kws_set_relay: "Set Relay"
+  kws_set_rotation: "Set Screen Rotation"
+
+  # Select
+  kws_set_memory: "Set Memory (Relay State After Power Loss)"
+
+modbus_controller:
+  - id: ${kws_id}
+    address: ${slave_addr}
+    modbus_id: ${modbus_id}
+    setup_priority: -10
+    update_interval: ${update_every}
+
+sensor:
+  # Rated Voltage
+  - platform: modbus_controller
+    modbus_controller_id: ${kws_id}
+    name: "${kws_name} ${kws_rated_voltage}"
+    id: ${kws_id}_rated_voltage
+    register_type: holding
+    address: 1
+    value_type: U_WORD
+    unit_of_measurement: "V"
+    accuracy_decimals: 0
+    filters: [ multiply: 0.01 ]
+
+  # Rated Current
+  - platform: modbus_controller
+    modbus_controller_id: ${kws_id}
+    name: "${kws_name} ${kws_rated_current}"
+    register_type: holding
+    address: 2
+    value_type: U_WORD
+    unit_of_measurement: "A"
+    accuracy_decimals: 1
+    filters: [ multiply: 0.01 ]
+
+  # Measured Voltage
+  - platform: modbus_controller
+    modbus_controller_id: ${kws_id}
+    name: "${kws_name} ${kws_measured_voltage}"
+    register_type: holding
+    address: 14
+    value_type: U_WORD
+    unit_of_measurement: "V"
+    accuracy_decimals: 1
+    filters: [ multiply: 0.01 ]
+
+  # Measured Current
+  - platform: modbus_controller
+    modbus_controller_id: ${kws_id}
+    name: "${kws_name} ${kws_measured_current}"
+    register_type: holding
+    address: 18
+    value_type: U_WORD
+    unit_of_measurement: "A"
+    accuracy_decimals: 3
+    filters: [ multiply: 0.001 ]
+
+  # Measured Power
+  - platform: modbus_controller
+    modbus_controller_id: ${kws_id}
+    name: "${kws_name} ${kws_measured_power}"
+    register_type: holding
+    address: 26
+    value_type: U_WORD
+    unit_of_measurement: "W"
+    accuracy_decimals: 1
+    filters: [ multiply: 0.1 ]
+
+  # Measured Power Factor
+  - platform: modbus_controller
+    modbus_controller_id: ${kws_id}
+    name: "${kws_name} ${kws_measured_pf}"
+    register_type: holding
+    address: 48
+    value_type: U_WORD
+    unit_of_measurement: ""
+    accuracy_decimals: 3
+    filters: [ multiply: 0.001 ]
+
+  # Measured Frequency
+  - platform: modbus_controller
+    modbus_controller_id: ${kws_id}
+    name: "${kws_name} ${kws_measured_freq}"
+    register_type: holding
+    address: 51
+    value_type: U_WORD
+    unit_of_measurement: "Hz"
+    accuracy_decimals: 2
+    filters: [ multiply: 0.01 ]
+
+  # Measured Energy
+  - platform: modbus_controller
+    modbus_controller_id: ${kws_id}
+    name: "${kws_name} ${kws_measured_energy}"
+    register_type: holding
+    address: 55
+    value_type: U_WORD
+    unit_of_measurement: "kWh"
+    accuracy_decimals: 3
+    filters: [ multiply: 0.001 ]
+
+  # Measured Temperature
+  - platform: modbus_controller
+    modbus_controller_id: ${kws_id}
+    name: "${kws_name} ${kws_measured_temp}"
+    register_type: holding
+    address: 60
+    value_type: U_WORD
+    unit_of_measurement: "°C"
+    accuracy_decimals: 0
+
+  # Measured Timer Minutes
+  - platform: modbus_controller
+    modbus_controller_id: ${kws_id}
+    name: "${kws_name} ${kws_measured_timer}"
+    register_type: holding
+    address: 61
+    value_type: U_WORD
+    unit_of_measurement: "min"
+    accuracy_decimals: 0
+
+  # Alarm code from the device (read-only).
+  # 0 = No alarm
+  # 1 = Over Voltage Alarm
+  # 2 = Under Voltage Alarm
+  # 4 = Over Current Alarm
+  # 32 = Over Temperature Alarm
+  # Any other value = Other alarm
+  # This is read only value. Alarms clear automatically when
+  # the device is turned on manually, but will remain active
+  # when relay is switched on remotely. The display
+  # shows no alarm when in ON state.
+  - platform: modbus_controller
+    modbus_controller_id: ${kws_id}
+    id: ${kws_id}_alarm_code
+    name: "${kws_name} ${kws_alarm_code}"
+    address: 62
+    register_type: holding
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+text_sensor:
+  # Description of the Alarm Code (this is optional)
+  - platform: template
+    name: "${kws_name} ${kws_alarm}"
+    lambda: |-
+      if (isnan(id(${kws_id}_alarm_code).state)) {
+        return {"Waiting..."};
+      }
+
+      int code = int(id(${kws_id}_alarm_code).state);
+      switch (code) {
+        case 0:
+          return {"No alarm"};
+        case 1:
+          return {"Over Voltage"};
+        case 2:
+          return {"Under Voltage"};
+        case 4:
+          return {"Over Current"};
+        case 32:
+          return {"Over Temperature"};
+        default:
+          char buffer[32];
+          snprintf(buffer, sizeof(buffer), "Other (code: %d)", code);
+          return {buffer};
+      }
+
+number:
+  # Limit Over-Voltage
+  - platform: modbus_controller
+    modbus_controller_id: ${kws_id}
+    name: "${kws_name} $kws_limit_ov"
+    address: 64
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "V"
+    min_value: 130
+    max_value: 290
+    multiply: 10 # for 250V stored value will be 2500
+    step: 1
+    mode: box
+
+  # Limit Under-Voltage
+  - platform: modbus_controller
+    modbus_controller_id: ${kws_id}
+    name: "${kws_name} ${kws_limit_uv}"
+    address: 65
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "V"
+    min_value: 85
+    max_value: 220
+    multiply: 10 # for 220V stored value will be 2200
+    step: 1
+    mode: box
+
+  # Limit Over-Current
+  - platform: modbus_controller
+    modbus_controller_id: ${kws_id}
+    name: "${kws_name} ${kws_limit_oc}"
+    address: 66
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "A"
+    min_value: 0
+    max_value: 40
+    step: 0.1
+    multiply: 100 # for 40.0A stored value will be 4000
+    mode: box
+
+  # Limit Over-Power
+  - platform: modbus_controller
+    modbus_controller_id: ${kws_id}
+    name: "${kws_name} ${kws_limit_op}"
+    address: 67
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "kW"
+    min_value: 0
+    max_value: 12
+    step: 0.1
+    multiply: 100 # for 12.0kW stored value will be 1200
+    mode: box
+
+  # Limit Over-Temp
+  # Sets the over-temperature protection threshold.
+  - platform: modbus_controller
+    modbus_controller_id: ${kws_id}
+    name: "${kws_name} ${kws_limit_temp}"
+    address: 72
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "°C"
+    min_value: 0
+    max_value: 150
+    step: 1
+    mode: box
+
+  # Limit Energy
+  # ⚠️ FIRMWARE BUG: The energy limit is stored across registers 73 and 74 as a 32-bit value:
+  # total_limit_wh = (reg[73] * 65535) + reg[74]
+  #
+  # However, writing to one register (73 or 74) resets the other to zero, same as writing 32-bit value to two registers!
+  # To avoid this issue, we write only to register 74 - this limits the range to 0 - 65535 Wh
+  # (i.e. 0 - 65.535 kWh) in 0.1 kWh steps, but avoids corrupting the full value.
+  #
+  # Writing to register 73 directly increases the energy limit in large 65.535 kWh steps.
+  # Reading always returns the correct value, but value over 65.5kWh can only be set from within the device.
+  - platform: modbus_controller
+    modbus_controller_id: ${kws_id}
+    name: "${kws_name} ${kws_limit_energy}"
+    address: 74
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "kWh"
+    min_value: 0.0
+    max_value: 65.5
+    step: 0.1
+    mode: box
+    multiply: 1000 # for 10.0kWh stored value will be 10000
+
+  # Set Device Slave Address
+  # Modbus slave address of the device on the RS-485 bus.
+  # Changing it via the UI will update the device address, which may result in loss of communication if value in the device is not updated. Also address in modbus_controller above must be updated.
+  - platform: modbus_controller
+    modbus_controller_id: ${kws_id}
+    name: "${kws_name} ${kws_set_address}"
+    entity_category: config
+    address: 12
+    register_type: holding
+    value_type: U_WORD
+    min_value: 0
+    max_value: 255
+    step: 1
+    mode: box
+    lambda: |-
+      if (x == -1) {
+        // Return current UI value (default)
+        return 0;
+      }
+      // Convert Modbus value (e.g. 65283) to UI value (e.g. 255)
+      return (x - 3) / 256;
+    write_lambda: |-
+      // Convert UI value (e.g. 255) to Modbus value (e.g. 65283)
+      return 256 * x + 3;
+
+  # Set Backlight Timeout
+  # This setting defines how long the backlight stays on (in minutes).
+  # A value of 0 keeps the backlight on all the time.
+  - platform: modbus_controller
+    modbus_controller_id: ${kws_id}
+    name: "${kws_name} ${kws_set_backlight_timeout}"
+    address: 71
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "min"
+    min_value: 0
+    max_value: 60
+    step: 1
+    mode: box
+
+  # Set Backlight Brightness
+  # This setting controls the brightness of the backlight as a percentage.
+  - platform: modbus_controller
+    modbus_controller_id: ${kws_id}
+    name: "${kws_name} ${kws_set_backlight_brightness}"
+    address: 82
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "%"
+    min_value: 0
+    max_value: 100
+    step: 1
+    mode: slider
+
+switch:
+  # Relay Control
+  # This switch controls the main output relay.
+  # Turning it off disconnects the load regardless of other settings.
+  # ⚠️ WARNING: Unlike the physical/manual switch, switching relay ON remotely does not clear the Alarm Code.
+  # This means the meter can be forced to operate even when an alarm condition is active, unlike the physical/manual switch.
+  # If an alarm is already present, the meter will not automatically switch off again!
+  - platform: modbus_controller
+    modbus_controller_id: ${kws_id}
+    name: "${kws_name} ${kws_set_relay}"
+    register_type: holding
+    address: 63
+    bitmask: 1
+    icon: "mdi:toggle-switch"
+
+  # Set Screen Rotation
+  # This switch flips the screen orientation 180 degrees.
+  # When turned on, the display appears upside down.
+  - platform: modbus_controller
+    modbus_controller_id: ${kws_id}
+    name: "${kws_name} ${kws_set_rotation}"
+    register_type: holding
+    address: 81
+    bitmask: 1
+    icon: "mdi:rotate-3d-variant"
+
+select:
+    # Set Memory (Relay State After Power Loss)
+    # Defines how the relay behaves when power is restored:
+    # - Off: relay will stay off after a power cut
+    # - On: relay will turn on after a power cut
+    # - Hold (Restore): relay will return to its state before the power cut
+  - platform: modbus_controller
+    modbus_controller_id: ${kws_id}
+    name: "${kws_name} ${kws_set_memory}"
+    address: 80
+    optionsmap:
+      "Off" : 0
+      "On"  : 1
+      "Hold (Restore)" : 2
