@@ -6,6 +6,10 @@ This repository provides an ESPHome configuration for the KWS-303L Energy Meter 
 
 _KWS-303L Energy Meter_
 
+<img src="docs/kws-303l-esphome.png" alt="KWS-303L Energy Meter in ESPHome" width="400">
+
+_KWS-303L Energy Meter in ESPHome_
+
 ## Features
 
 - **Real-time Monitoring** – Measure voltage, current, power, energy, frequency, and more.
