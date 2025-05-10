@@ -3,7 +3,7 @@
 This repository provides an ESPHome configuration for the KWS-303L Energy Meter – a compact, 1-module DIN-rail, Modbus-based device used for monitoring electrical parameters such as voltage, current (rated at 40 A), power, and more. This configuration enables seamless integration of the KWS-303L into ESPHome-based projects.
 
 <img src="docs/kws-303l.jpg" alt="KWS-303L Energy Meter" width="200">
-* KWS-303L Energy Meter *
+_KWS-303L Energy Meter_
 
 ## Features
 
